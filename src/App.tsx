@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './App.css';
-import { ATTRIBUTE_LIST, CLASS_LIST } from './consts.js';
+import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts.js';
 import type { Attributes, Class } from './types';
 
 // README §1: "Create state and controls for each of the 6 attributes (`ATTRIBUTE_LIST`)."
@@ -28,9 +28,22 @@ function getAbilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
+// README §4: "Characters start with `10 + (4 * Intelligence Modifier)` points to distribute."
+function getSkillPointBudget(intelligenceScore: number): number {
+  return 10 + 4 * getAbilityModifier(intelligenceScore);
+}
+
+function initialSkillPoints(): Record<string, number> {
+  return SKILL_LIST.reduce((points, skill) => {
+    points[skill.name] = 0;
+    return points;
+  }, {} as Record<string, number>);
+}
+
 function App() {
   const [attributes, setAttributes] = useState<Attributes>(initialAttributes);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [skillPoints, setSkillPoints] = useState<Record<string, number>>(initialSkillPoints);
 
   // README §1: "Allow increment/decrement independently."
   // No min/max in this requirement — the 70-point cap is requirement 6.
@@ -39,6 +52,23 @@ function App() {
       ...prev,
       [name]: prev[name] + delta,
     }));
+  };
+
+  // README §4: min 0 per skill; no max except total available points.
+  // If Intelligence later drops, the README does not say to refund points, so we only block new spending.
+  const adjustSkill = (name: string, delta: number) => {
+    setSkillPoints((prev) => {
+      const nextValue = prev[name] + delta;
+      if (nextValue < 0) {
+        return prev;
+      }
+      const nextSpent = Object.values({ ...prev, [name]: nextValue }).reduce((sum, n) => sum + n, 0);
+      const budget = getSkillPointBudget(attributes.Intelligence);
+      if (nextSpent > budget) {
+        return prev;
+      }
+      return { ...prev, [name]: nextValue };
+    });
   };
 
   return (
@@ -90,6 +120,26 @@ function App() {
             })}
           </div>
         )}
+
+        {/* README §4: skills from SKILL_LIST; total = points spent + related attribute modifier. */}
+        <div>
+          Points to distribute: {getSkillPointBudget(attributes.Intelligence)}{' '}
+          (spent: {Object.values(skillPoints).reduce((sum, n) => sum + n, 0)})
+          {SKILL_LIST.map((skill) => {
+            const attribute = skill.attributeModifier as keyof Attributes;
+            const points = skillPoints[skill.name];
+            const modifier = getAbilityModifier(attributes[attribute]);
+            const total = points + modifier;
+            return (
+              <div key={skill.name}>
+                {skill.name} - points: {points}{' '}
+                <button type="button" onClick={() => adjustSkill(skill.name, 1)}>+</button>{' '}
+                <button type="button" onClick={() => adjustSkill(skill.name, -1)}>-</button>
+                {' | '}modifier ({attribute}): {modifier}{' | '}total: {total}
+              </div>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
