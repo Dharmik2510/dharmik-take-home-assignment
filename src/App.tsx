@@ -67,13 +67,24 @@ function App() {
       });
   }, []);
 
-  // README §1: "Allow increment/decrement independently."
-  // No min/max in this requirement — the 70-point cap is requirement 6.
+  // README §6: "Total attribute points across all 6 must not exceed 70."
+  // "Prevent incrementing if the cap is reached." Decrement is still allowed.
   const adjustAttribute = (name: keyof Attributes, delta: number) => {
-    setAttributes((prev) => ({
-      ...prev,
-      [name]: prev[name] + delta,
-    }));
+    setAttributes((prev) => {
+      if (delta > 0) {
+        const total = ATTRIBUTE_LIST.reduce(
+          (sum, attrName) => sum + prev[attrName as keyof Attributes],
+          0,
+        );
+        if (total >= 70) {
+          return prev;
+        }
+      }
+      return {
+        ...prev,
+        [name]: prev[name] + delta,
+      };
+    });
   };
 
   // README §4: min 0 per skill; no max except total available points.
