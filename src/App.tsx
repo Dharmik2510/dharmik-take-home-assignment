@@ -113,44 +113,54 @@ function App() {
         <h1>React Coding Exercise</h1>
       </header>
       <section className="App-section">
-        <button type="button" onClick={saveCharacters}>Save</button>
-        <button type="button" onClick={addCharacter}>Add Character</button>
-        {loadError && <div>{loadError}</div>}
-        {saveError && <div>{saveError}</div>}
-        <div>
-          <div>Party Skill Check</div>
-          <select value={partySkill} onChange={(event) => setPartySkill(event.target.value)}>
-            {SKILL_LIST.map((skill) => (
-              <option key={skill.name} value={skill.name}>
-                {skill.name}
-              </option>
-            ))}
-          </select>
-          <label>
-            DC{' '}
-            <input
-              type="number"
-              value={partyDifficultyClass}
-              onChange={(event) => setPartyDifficultyClass(event.target.value)}
-            />
-          </label>
-          <button type="button" onClick={rollPartySkillCheck}>Roll</button>
+        <div className="toolbar">
+          <button type="button" className="btn btn-primary" onClick={saveCharacters}>Save</button>
+          <button type="button" className="btn btn-secondary" onClick={addCharacter}>Add Character</button>
+        </div>
+        {loadError && <div className="status-error">{loadError}</div>}
+        {saveError && <div className="status-error">{saveError}</div>}
+        <div className="card">
+          <div className="card-title">Party Skill Check</div>
+          <div className="check-row">
+            <select
+              className="control"
+              value={partySkill}
+              onChange={(event) => setPartySkill(event.target.value)}
+            >
+              {SKILL_LIST.map((skill) => (
+                <option key={skill.name} value={skill.name}>
+                  {skill.name}
+                </option>
+              ))}
+            </select>
+            <label className="field">
+              DC{' '}
+              <input
+                type="number"
+                value={partyDifficultyClass}
+                onChange={(event) => setPartyDifficultyClass(event.target.value)}
+              />
+            </label>
+            <button type="button" className="btn btn-primary" onClick={rollPartySkillCheck}>Roll</button>
+          </div>
           {partyResult && (
-            <div>
+            <div className={`check-result ${partyResult.success ? 'is-success' : 'is-failure'}`}>
               Character {partyResult.characterIndex + 1} was chosen | Roll: {partyResult.roll}{' '}
               | skill total: {partyResult.skillTotal} | DC: {partyResult.difficultyClass}{' '}
               | {partyResult.success ? 'Success' : 'Failure'}
             </div>
           )}
         </div>
-        {characters.map((character, index) => (
-          <CharacterSheet
-            key={character.id ?? index}
-            characterLabel={`Character ${index + 1}`}
-            character={character}
-            onChange={(updater) => updateCharacter(index, updater)}
-          />
-        ))}
+        <div className="character-list">
+          {characters.map((character, index) => (
+            <CharacterSheet
+              key={character.id ?? index}
+              characterLabel={`Character ${index + 1}`}
+              character={character}
+              onChange={(updater) => updateCharacter(index, updater)}
+            />
+          ))}
+        </div>
       </section>
     </div>
   );
