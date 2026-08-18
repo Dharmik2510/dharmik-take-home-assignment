@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts.js';
 import type { Attributes, Character, Class } from './types';
 
@@ -42,6 +43,17 @@ function getSkillPointBudget(intelligenceScore: number): number {
   return 10 + 4 * getAbilityModifier(intelligenceScore);
 }
 
+// README §4: "Total skill value = points spent + related attribute modifier."
+export function getSkillTotal(character: Character, skillName: string): number {
+  const skill = SKILL_LIST.find((entry) => entry.name === skillName);
+  if (!skill) {
+    return 0;
+  }
+  const attribute = skill.attributeModifier as keyof Attributes;
+  const points = character.skillPoints[skillName] ?? 0;
+  return points + getAbilityModifier(character.attributes[attribute]);
+}
+
 type CharacterSheetProps = {
   title: string;
   character: Character;
@@ -49,6 +61,15 @@ type CharacterSheetProps = {
 };
 
 function CharacterSheet({ title, character, onChange }: CharacterSheetProps) {
+  const [checkSkill, setCheckSkill] = useState(SKILL_LIST[0].name);
+  const [dc, setDc] = useState('');
+  const [checkResult, setCheckResult] = useState<{
+    roll: number;
+    skillTotal: number;
+    dc: number;
+    success: boolean;
+  } | null>(null);
+
   // README §6: total across all 6 must not exceed 70; prevent incrementing at the cap.
   const adjustAttribute = (name: keyof Attributes, delta: number) => {
     if (delta > 0) {
@@ -85,6 +106,19 @@ function CharacterSheet({ title, character, onChange }: CharacterSheetProps) {
     onChange({
       ...character,
       skillPoints: { ...character.skillPoints, [name]: nextValue },
+    });
+  };
+
+  // README §8: Roll 1–20. Success if (roll + skill total) ≥ DC.
+  const rollSkillCheck = () => {
+    const dcValue = Number(dc);
+    const roll = Math.floor(Math.random() * 20) + 1;
+    const skillTotal = getSkillTotal(character, checkSkill);
+    setCheckResult({
+      roll,
+      skillTotal,
+      dc: dcValue,
+      success: roll + skillTotal >= dcValue,
     });
   };
 
@@ -142,7 +176,7 @@ function CharacterSheet({ title, character, onChange }: CharacterSheetProps) {
           const attribute = skill.attributeModifier as keyof Attributes;
           const points = character.skillPoints[skill.name];
           const modifier = getAbilityModifier(character.attributes[attribute]);
-          const total = points + modifier;
+          const total = getSkillTotal(character, skill.name);
           return (
             <div key={skill.name}>
               {skill.name} - points: {points}{' '}
@@ -152,6 +186,33 @@ function CharacterSheet({ title, character, onChange }: CharacterSheetProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* README §8: per-character skill checks. */}
+      <div>
+        <div>Skill Check</div>
+        <select value={checkSkill} onChange={(event) => setCheckSkill(event.target.value)}>
+          {SKILL_LIST.map((skill) => (
+            <option key={skill.name} value={skill.name}>
+              {skill.name}
+            </option>
+          ))}
+        </select>
+        <label>
+          DC{' '}
+          <input
+            type="number"
+            value={dc}
+            onChange={(event) => setDc(event.target.value)}
+          />
+        </label>
+        <button type="button" onClick={rollSkillCheck}>Roll</button>
+        {checkResult && (
+          <div>
+            Roll: {checkResult.roll} | skill total: {checkResult.skillTotal} | DC: {checkResult.dc}{' '}
+            | {checkResult.success ? 'Success' : 'Failure'}
+          </div>
+        )}
       </div>
     </div>
   );
