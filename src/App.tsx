@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts.js';
 import type { Attributes, Class } from './types';
+
+// README §5: POST/GET https://recruiting.verylongdomaintotestwith.ca/api/{{github_username}}/character
+// Example: include the curly braces — /api/{mjohnston}/character
+const CHARACTER_API_URL =
+  'https://recruiting.verylongdomaintotestwith.ca/api/{dharmiksoni}/character';
 
 // README §1: "Create state and controls for each of the 6 attributes (`ATTRIBUTE_LIST`)."
 // README does not specify a starting value, so we start at 0 rather than inventing a D&D default.
@@ -45,6 +50,23 @@ function App() {
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [skillPoints, setSkillPoints] = useState<Record<string, number>>(initialSkillPoints);
 
+  // README §5: retrieve the character when the app starts next time (GET).
+  useEffect(() => {
+    fetch(CHARACTER_API_URL)
+      .then((response) => response.json())
+      .then((data) => {
+        // Observed GET shapes: { statusCode, body: <posted JSON> } or { message: "Item not found" }.
+        const saved = data.body;
+        if (saved?.attributes && saved?.skillPoints) {
+          setAttributes(saved.attributes);
+          setSkillPoints(saved.skillPoints);
+        }
+      })
+      .catch(() => {
+        // Keep defaults if nothing is saved yet or the request fails.
+      });
+  }, []);
+
   // README §1: "Allow increment/decrement independently."
   // No min/max in this requirement — the 70-point cap is requirement 6.
   const adjustAttribute = (name: keyof Attributes, delta: number) => {
@@ -71,12 +93,26 @@ function App() {
     });
   };
 
+  // README §5: Saving is POST with Content-Type: application/json.
+  const saveCharacter = () => {
+    fetch(CHARACTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ attributes, skillPoints }),
+    }).catch(() => {
+      // README does not specify error UI.
+    });
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>React Coding Exercise</h1>
       </header>
       <section className="App-section">
+        <button type="button" onClick={saveCharacter}>Save</button>
         {ATTRIBUTE_LIST.map((name) => {
           const key = name as keyof Attributes;
           return (
