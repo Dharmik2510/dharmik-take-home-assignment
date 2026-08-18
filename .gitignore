@@ -22,3 +22,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 ./idea
+
+# Local pairing notes — not part of the assignment submission
+DECISIONS.md
