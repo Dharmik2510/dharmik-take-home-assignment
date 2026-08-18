@@ -10,6 +10,7 @@ export type Attributes = {
 export type Class = "Barbarian" | "Wizard" | "Bard";
 
 export type Character = {
+    id?: string;
     attributes: Attributes;
     skillPoints: Record<string, number>;
     selectedClass: Class | null;
