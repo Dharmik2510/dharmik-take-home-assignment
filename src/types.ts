@@ -8,3 +8,9 @@ export type Attributes = {
 };
 
 export type Class = "Barbarian" | "Wizard" | "Bard";
+
+export type Character = {
+    attributes: Attributes;
+    skillPoints: Record<string, number>;
+    selectedClass: Class | null;
+};
