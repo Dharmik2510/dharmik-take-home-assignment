@@ -21,6 +21,13 @@ function meetsClassMinimums(attributes: Attributes, minimums: Attributes): boole
   });
 }
 
+// README §3: "+1 for every 2 points above 10" (negative below 10).
+// Examples: 12 → +1, 14 → +2, 7 → -2.
+// Math.floor is required so 7 → -2. Truncating toward zero would give -1.
+function getAbilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
 function App() {
   const [attributes, setAttributes] = useState<Attributes>(initialAttributes);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
@@ -45,6 +52,7 @@ function App() {
           return (
             <div key={key}>
               {key}: {attributes[key]}{' '}
+              (modifier: {getAbilityModifier(attributes[key])}){' '}
               <button onClick={() => adjustAttribute(key, 1)}>+</button>
               <button onClick={() => adjustAttribute(key, -1)}>-</button>
             </div>
