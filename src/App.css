@@ -49,7 +49,12 @@
   color: #052e16;
 }
 
-.btn-primary:hover {
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary:hover:not(:disabled) {
   background: #16a34a;
 }
 
@@ -82,6 +87,12 @@
 
 .status-error {
   color: var(--danger);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.status-muted {
+  color: var(--muted);
   text-align: center;
   font-size: 0.95rem;
 }

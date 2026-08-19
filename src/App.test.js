@@ -79,8 +79,8 @@ test('increments and decrements attributes independently', async () => {
   userEvent.click(within(dexterity).getByRole('button', { name: '+' }));
   userEvent.click(within(strength).getByRole('button', { name: '-' }));
 
-  expect(within(strength).getByText(/Strength: 1/)).toBeInTheDocument();
-  expect(within(dexterity).getByText(/Dexterity: 1/)).toBeInTheDocument();
+  expect(within(strength).getByText(/Strength: 11/)).toBeInTheDocument();
+  expect(within(dexterity).getByText(/Dexterity: 11/)).toBeInTheDocument();
 });
 
 test('clicking a class shows its required stats from CLASS_LIST', async () => {
@@ -145,8 +145,10 @@ test('does not spend skill points beyond the Intelligence budget', async () => {
 
   const section = characterSection(1);
   const acrobatics = within(section).getByText(/Acrobatics - points/).closest('div');
-  userEvent.click(within(acrobatics).getByRole('button', { name: '+' }));
-  expect(acrobatics).toHaveTextContent('points: 0');
+  for (let i = 0; i < 11; i += 1) {
+    userEvent.click(within(acrobatics).getByRole('button', { name: '+' }));
+  }
+  expect(acrobatics).toHaveTextContent('points: 10');
 });
 
 test('spends skill points after Intelligence provides a budget', async () => {

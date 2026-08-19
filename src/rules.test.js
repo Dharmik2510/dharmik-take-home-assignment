@@ -2,6 +2,7 @@ import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts';
 import {
   ATTRIBUTE_POINT_CAP,
   chooseCharacterForPartyCheck,
+  clampSkillPointsToBudget,
   createCharacter,
   ensureCharacterId,
   getAbilityModifier,
@@ -13,6 +14,7 @@ import {
   meetsClassMinimums,
   nextAttributes,
   nextSkillPoints,
+  parseDifficultyClass,
   rollDie,
 } from './rules';
 
@@ -53,9 +55,10 @@ describe('getSkillPointBudget', () => {
     expect(getSkillPointBudget(10)).toBe(10);
   });
 
-  test('scales by 4 times the Intelligence modifier', () => {
+  test('scales by 4 times the Intelligence modifier and never goes below 0', () => {
     expect(getSkillPointBudget(14)).toBe(18);
     expect(getSkillPointBudget(7)).toBe(2);
+    expect(getSkillPointBudget(0)).toBe(0);
   });
 });
 
@@ -93,6 +96,11 @@ describe('nextAttributes', () => {
     expect(nextAttributes(start, 'Dexterity', -1).Dexterity).toBe(2);
   });
 
+  test('does not decrement below 0', () => {
+    const start = attributesWith({ Strength: 0 });
+    expect(nextAttributes(start, 'Strength', -1)).toBe(start);
+  });
+
   test('prevents incrementing when the six attributes already sum to 70', () => {
     const atCap = attributesWith({
       Strength: 20,
@@ -124,12 +132,25 @@ describe('nextSkillPoints', () => {
     expect(nextSkillPoints(spent, 'Athletics', 1, 10)).toBe(spent);
     expect(nextSkillPoints(empty, 'Acrobatics', 1, 10).Acrobatics).toBe(1);
   });
+
+  test('clamps spent points when the budget shrinks', () => {
+    const spent = { ...empty, Acrobatics: 8, Athletics: 2 };
+    const clamped = clampSkillPointsToBudget(spent, 10);
+    expect(getSpentSkillPoints(clamped)).toBe(10);
+    const reduced = clampSkillPointsToBudget(spent, 0);
+    expect(getSpentSkillPoints(reduced)).toBe(0);
+  });
 });
 
 describe('skill check', () => {
   test('succeeds when roll + skill total is at least DC', () => {
     expect(isSkillCheckSuccess(15, 5, 20)).toBe(true);
     expect(isSkillCheckSuccess(15, 4, 20)).toBe(false);
+  });
+
+  test('rejects an empty DC', () => {
+    expect(parseDifficultyClass('')).toBeNull();
+    expect(parseDifficultyClass('12')).toBe(12);
   });
 
   test('rollDie is inclusive 1–20', () => {
@@ -175,10 +196,10 @@ describe('chooseCharacterForPartyCheck', () => {
 });
 
 describe('createCharacter', () => {
-  test('starts every ATTRIBUTE_LIST and SKILL_LIST entry at 0', () => {
+  test('starts every ATTRIBUTE_LIST entry at 10 and each skill at 0', () => {
     const character = createCharacter();
     ATTRIBUTE_LIST.forEach((name) => {
-      expect(character.attributes[name]).toBe(0);
+      expect(character.attributes[name]).toBe(10);
     });
     SKILL_LIST.forEach((skill) => {
       expect(character.skillPoints[skill.name]).toBe(0);

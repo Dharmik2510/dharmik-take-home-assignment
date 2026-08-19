@@ -1,0 +1,12 @@
+export const MODIFIER_BASELINE = 10;
+export const POINTS_PER_MODIFIER = 2;
+
+export const BASE_SKILL_POINTS = 10;
+export const SKILL_POINTS_PER_INTELLIGENCE_MODIFIER = 4;
+
+export const ATTRIBUTE_POINT_CAP = 70;
+export const ATTRIBUTE_MINIMUM = 0;
+
+export const SKILL_CHECK_DIE_SIDES = 20;
+
+export const INITIAL_ATTRIBUTE_SCORE = MODIFIER_BASELINE;
